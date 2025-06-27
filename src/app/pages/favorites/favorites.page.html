@@ -103,19 +103,18 @@
   <ion-alert
     [isOpen]="showDeleteAlert"
     header="Supprimer la BD"
-    [message]="'Êtes-vous sûr de vouloir supprimer \"' + (comicToDelete?.title || '') + '\" ?'"
+    message="Etes-vous sur de vouloir supprimer cette BD ?"
     [buttons]="[
       {
         text: 'Annuler',
-        role: 'cancel',
-        handler: () => cancelDelete()
+        role: 'cancel'
       },
       {
         text: 'Supprimer',
-        role: 'destructive',
-        handler: () => deleteComic()
+        role: 'destructive'
       }
-    ]">
+    ]"
+    (ionAlertDidDismiss)="onAlertDismiss($event)">
   </ion-alert>
 
   <!-- Toast -->
