@@ -1,0 +1,38 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrowBack" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon name="construct" slot="start"></ion-icon>
+      Générateur
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-item>
+    <ion-label position="stacked">Texte de la bulle</ion-label>
+    <ion-input [(ngModel)]="speech" placeholder="Entrer le texte"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">Expression</ion-label>
+    <ion-select [(ngModel)]="expression">
+      <ion-select-option value="happy">Heureux</ion-select-option>
+      <ion-select-option value="sad">Triste</ion-select-option>
+      <ion-select-option value="surprised">Surpris</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-button expand="full" (click)="generate()">Générer</ion-button>
+
+  <ion-card *ngIf="generated">
+    <ion-card-content class="preview-card">
+      <img [src]="imageMap[expression]" alt="expression" />
+      <div class="speech">{{ speech }}</div>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
