@@ -108,6 +108,18 @@ export class ComicService {
       return margin;
     };
 
+    const detectTopWhiteMargin = (
+      ctx: CanvasRenderingContext2D,
+      width: number,
+      height: number
+    ): number => {
+      let margin = 0;
+      while (margin < height && isRowMostlyWhite(ctx, margin, width)) {
+        margin++;
+      }
+      return margin;
+    };
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
@@ -128,7 +140,7 @@ export class ComicService {
 
           const bottomMargin = detectBottomWhiteMargin(tempCtx, img.width, img.height);
 
-          const topCrop = Math.min(Math.floor(img.height * 0.1), img.height - bottomMargin - 1);
+          const topCrop = detectTopWhiteMargin(tempCtx, img.width, img.height - bottomMargin);
 
           const drawableHeight = img.height - topCrop - bottomMargin;
           const panelWidth = img.width / 2;
