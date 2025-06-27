@@ -88,6 +88,27 @@ ion-card.comic-card {
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    .card-actions {
+      opacity: 1;
+    }
+  }
+}
+
+.card-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  .delete-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
   }
 }
 

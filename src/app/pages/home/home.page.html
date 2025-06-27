@@ -35,6 +35,17 @@
     <ion-row>
       <ion-col size="12" size-sm="6" size-md="4" size-lg="3" *ngFor="let comic of comics">
         <ion-card class="comic-card" (click)="readComic(comic)">
+          <div class="card-actions">
+            <ion-button
+              fill="clear"
+              size="small"
+              color="danger"
+              (click)="confirmDelete(comic, $event)"
+              class="delete-btn">
+              <ion-icon name="trash" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+
           <ion-img [src]="comic.coverImage" [alt]="comic.title" class="comic-cover"></ion-img>
           
           <ion-card-header>
@@ -147,6 +158,18 @@
       </ion-content>
     </ng-template>
   </ion-modal>
+
+  <!-- Delete confirmation alert -->
+  <ion-alert
+    [isOpen]="showDeleteAlert"
+    header="Supprimer la BD"
+    message="Etes-vous sur de vouloir supprimer cette BD ?"
+    [buttons]="[
+      { text: 'Annuler', role: 'cancel' },
+      { text: 'Supprimer', role: 'destructive' }
+    ]"
+    (ionAlertDidDismiss)="onAlertDismiss($event)">
+  </ion-alert>
 
   <!-- Toast -->
   <ion-toast

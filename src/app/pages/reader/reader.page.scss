@@ -32,7 +32,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    max-width: 90%;
+    max-width: 100%;
   }
 
   .panel-image {
@@ -41,6 +41,13 @@
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    cursor: zoom-in;
+
+    &.zoomed {
+      max-height: none;
+      width: 100%;
+      cursor: zoom-out;
+    }
   }
 
   .nav-button {

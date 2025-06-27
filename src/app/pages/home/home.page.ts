@@ -3,36 +3,37 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import {
-  IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonFab,
-  IonFabButton,
-  IonIcon,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonButton,
-  IonButtons,
-  IonModal,
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonTextarea,
-  IonDatetime,
-  IonProgressBar,
-  IonToast,
-  IonImg,
-  IonText,
-  IonBadge,
-  IonChip
-} from '@ionic/angular/standalone';
+  import {
+    IonContent,
+    IonHeader,
+    IonTitle,
+    IonToolbar,
+    IonFab,
+    IonFabButton,
+    IonIcon,
+    IonGrid,
+    IonRow,
+    IonCol,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
+    IonCardContent,
+    IonButton,
+    IonButtons,
+    IonModal,
+    IonItem,
+    IonLabel,
+    IonInput,
+    IonTextarea,
+    IonDatetime,
+    IonProgressBar,
+    IonToast,
+    IonImg,
+    IonText,
+    IonBadge,
+    IonChip,
+    IonAlert
+  } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { add, book, heart, star, starOutline, calendar, trash } from 'ionicons/icons';
 import { ComicService } from '../../services/comic.service';
@@ -73,7 +74,8 @@ import { Comic } from '../../models/comic.model';
     IonImg,
     IonText,
     IonBadge,
-    IonChip
+    IonChip,
+    IonAlert
   ],
 })
 export class HomePage implements OnInit, OnDestroy {
@@ -82,6 +84,8 @@ export class HomePage implements OnInit, OnDestroy {
   isProcessing = false;
   showToast = false;
   toastMessage = '';
+  showDeleteAlert = false;
+  comicToDelete: Comic | null = null;
   
   newComic = {
     title: '',
@@ -177,6 +181,35 @@ export class HomePage implements OnInit, OnDestroy {
   updateRating(comic: Comic, rating: number, event: Event) {
     event.stopPropagation();
     this.comicService.updateComic(comic.id, { rating });
+  }
+
+  confirmDelete(comic: Comic, event: Event) {
+    event.stopPropagation();
+    this.comicToDelete = comic;
+    this.showDeleteAlert = true;
+  }
+
+  deleteComic() {
+    if (this.comicToDelete) {
+      this.comicService.deleteComic(this.comicToDelete.id);
+      this.showToastMessage('BD supprimée avec succès');
+      this.comicToDelete = null;
+    }
+    this.showDeleteAlert = false;
+  }
+
+  cancelDelete() {
+    this.comicToDelete = null;
+    this.showDeleteAlert = false;
+  }
+
+  onAlertDismiss(event: any) {
+    const role = event.detail.role;
+    if (role === 'destructive') {
+      this.deleteComic();
+    } else {
+      this.cancelDelete();
+    }
   }
 
   goToFavorites() {
