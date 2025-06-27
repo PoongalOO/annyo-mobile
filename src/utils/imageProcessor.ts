@@ -18,6 +18,14 @@ const detectBottomWhiteMargin = (ctx: CanvasRenderingContext2D, width: number, h
   return margin;
 };
 
+const detectTopWhiteMargin = (ctx: CanvasRenderingContext2D, width: number, height: number): number => {
+  let margin = 0;
+  while (margin < height && isRowMostlyWhite(ctx, margin, width)) {
+    margin++;
+  }
+  return margin;
+};
+
 export const processComicImage = (file: File): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -38,9 +46,7 @@ export const processComicImage = (file: File): Promise<string[]> => {
         tempCtx.drawImage(img, 0, 0);
 
         const bottomMargin = detectBottomWhiteMargin(tempCtx, img.width, img.height);
-
-        // Remove title area (approx. 10% of the image height)
-        const topCrop = Math.min(Math.floor(img.height * 0.1), img.height - bottomMargin - 1);
+        const topCrop = detectTopWhiteMargin(tempCtx, img.width, img.height - bottomMargin);
 
         // Calculate panel dimensions using the remaining drawable area
         const drawableHeight = img.height - topCrop - bottomMargin;
