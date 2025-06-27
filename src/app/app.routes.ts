@@ -17,9 +17,5 @@ export const routes: Routes = [
   {
     path: 'reader/:id',
     loadComponent: () => import('./pages/reader/reader.page').then(m => m.ReaderPage)
-  },
-  {
-    path: 'generator',
-    loadComponent: () => import('./pages/generator/generator.page').then(m => m.GeneratorPage)
   }
 ];
