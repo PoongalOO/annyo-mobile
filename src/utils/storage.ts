@@ -1,8 +1,8 @@
-import PouchDB from 'pouchdb';
+import PouchDB from 'pouchdb-browser';
 import { Comic } from '../types';
 import { COUCHDB_URL } from '../db.config';
 
-interface ComicDoc extends Comic {
+interface ComicDoc extends Omit<Comic, 'id'> {
   _id: string;
   _rev?: string;
 }
@@ -12,12 +12,14 @@ let comicsCache: Comic[] = [];
 
 const loadComics = async () => {
   try {
-    const result = await db.allDocs({ include_docs: true });
-    comicsCache = result.rows.map(r => {
-      const doc = r.doc as ComicDoc;
-      const { _id, _rev, ...rest } = doc;
-      return { id: _id, ...rest } as Comic;
-    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const result = await db.allDocs<ComicDoc>({ include_docs: true });
+    comicsCache = result.rows
+      .map((r: PouchDB.Core.AllDocsRow<ComicDoc>) => {
+        const doc = r.doc as ComicDoc;
+        const { _id, _rev, ...rest } = doc;
+        return { id: _id, ...rest } as Comic;
+      })
+      .sort((a: Comic, b: Comic) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (e) {
     console.error('Failed to load comics:', e);
     comicsCache = [];
@@ -45,7 +47,7 @@ export const addComic = (comic: Omit<Comic, 'id'>): Comic => {
 
 export const updateComic = (id: string, updates: Partial<Comic>): void => {
   db.get(id)
-    .then(doc => db.put({ ...(doc as ComicDoc), ...updates }))
+    .then((doc: ComicDoc) => db.put({ ...doc, ...updates }))
     .catch(console.error);
   const index = comicsCache.findIndex(c => c.id === id);
   if (index !== -1) {
@@ -55,7 +57,7 @@ export const updateComic = (id: string, updates: Partial<Comic>): void => {
 
 export const deleteComic = (id: string): void => {
   db.get(id)
-    .then(doc => db.remove(doc))
+    .then((doc: ComicDoc) => db.remove(doc))
     .catch(console.error);
   comicsCache = comicsCache.filter(c => c.id !== id);
 };

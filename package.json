@@ -28,7 +28,8 @@
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.0",
-    "pouchdb": "^8.0.1"
+    "pouchdb": "^8.0.1",
+    "pouchdb-browser": "^8.0.1"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.0.0",

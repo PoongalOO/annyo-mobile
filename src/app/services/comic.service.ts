@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import PouchDB from 'pouchdb';
+import PouchDB from 'pouchdb-browser';
 import { Comic } from '../models/comic.model';
 import { COUCHDB_URL } from '../../db.config';
 
-interface ComicDoc extends Comic {
+interface ComicDoc extends Omit<Comic, 'id'> {
   _id: string;
   _rev?: string;
 }
@@ -32,11 +32,15 @@ export class ComicService {
   private async loadComics(): Promise<void> {
     try {
       const result = await this.db.allDocs({ include_docs: true });
-      const comics = result.rows.map(row => {
-        const doc = row.doc as ComicDoc;
-        const { _id, _rev, ...rest } = doc;
-        return { id: _id, ...rest } as Comic;
-      }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const comics = result.rows
+        .map((row: PouchDB.Core.AllDocsRow<ComicDoc>) => {
+          const doc = row.doc as ComicDoc;
+          const { _id, _rev, ...rest } = doc;
+          return { id: _id, ...rest } as Comic;
+        })
+        .sort((a: Comic, b: Comic) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       this.comicsSubject.next(comics);
     } catch (error) {
       console.error('Failed to load comics:', error);
@@ -54,10 +58,14 @@ export class ComicService {
   }
 
   updateComic(id: string, updates: Partial<Comic>): void {
-    this.db.get(id).then(doc => {
-      const updated = { ...(doc as ComicDoc), ...updates };
-      return this.db.put(updated);
-    }).then(() => this.loadComics()).catch(console.error);
+    this.db
+      .get(id)
+      .then((doc: ComicDoc) => {
+        const updated = { ...doc, ...updates };
+        return this.db.put(updated);
+      })
+      .then(() => this.loadComics())
+      .catch(console.error);
 
     const comics = this.comicsSubject.getValue();
     const index = comics.findIndex(c => c.id === id);
@@ -68,7 +76,11 @@ export class ComicService {
   }
 
   deleteComic(id: string): void {
-    this.db.get(id).then(doc => this.db.remove(doc)).then(() => this.loadComics()).catch(console.error);
+    this.db
+      .get(id)
+      .then((doc: ComicDoc) => this.db.remove(doc))
+      .then(() => this.loadComics())
+      .catch(console.error);
     const comics = this.comicsSubject.getValue().filter(c => c.id !== id);
     this.comicsSubject.next(comics);
   }
