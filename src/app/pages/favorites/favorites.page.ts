@@ -148,6 +148,15 @@ export class FavoritesPage implements OnInit {
     this.showDeleteAlert = false;
   }
 
+  onAlertDismiss(event: any) {
+    const role = event.detail.role;
+    if (role === 'destructive') {
+      this.deleteComic();
+    } else {
+      this.cancelDelete();
+    }
+  }
+
   private showToastMessage(message: string) {
     this.toastMessage = message;
     this.showToast = true;
