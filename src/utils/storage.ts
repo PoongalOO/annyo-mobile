@@ -1,58 +1,63 @@
-import { Comic, ComicStorage } from '../types';
+import PouchDB from 'pouchdb';
+import { Comic } from '../types';
+import { COUCHDB_URL } from '../db.config';
 
-const STORAGE_KEY = 'comic-reader-data';
+interface ComicDoc extends Comic {
+  _id: string;
+  _rev?: string;
+}
 
-export const getStoredData = (): ComicStorage => {
+const db = new PouchDB<ComicDoc>('comics');
+let comicsCache: Comic[] = [];
+
+const loadComics = async () => {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : { comics: [], lastId: 0 };
-  } catch {
-    return { comics: [], lastId: 0 };
+    const result = await db.allDocs({ include_docs: true });
+    comicsCache = result.rows.map(r => {
+      const doc = r.doc as ComicDoc;
+      const { _id, _rev, ...rest } = doc;
+      return { id: _id, ...rest } as Comic;
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  } catch (e) {
+    console.error('Failed to load comics:', e);
+    comicsCache = [];
   }
 };
 
-export const saveStoredData = (data: ComicStorage): void => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error('Failed to save data:', error);
-  }
-};
+loadComics();
+
+db.changes({ since: 'now', live: true }).on('change', loadComics);
+
+if (COUCHDB_URL) {
+  db.sync(COUCHDB_URL, { live: true, retry: true }).on('change', loadComics);
+}
+
+export const getComics = (): Comic[] => comicsCache;
 
 export const addComic = (comic: Omit<Comic, 'id'>): Comic => {
-  const data = getStoredData();
-  const newComic: Comic = {
-    ...comic,
-    id: (data.lastId + 1).toString(),
-  };
-  
-  data.comics.push(newComic);
-  data.lastId += 1;
-  
-  saveStoredData(data);
+  const id = new Date().toISOString();
+  const doc: ComicDoc = { _id: id, ...comic };
+  db.put(doc).catch(console.error);
+  const newComic: Comic = { id, ...comic };
+  comicsCache.unshift(newComic);
   return newComic;
 };
 
 export const updateComic = (id: string, updates: Partial<Comic>): void => {
-  const data = getStoredData();
-  const index = data.comics.findIndex(comic => comic.id === id);
-  
+  db.get(id)
+    .then(doc => db.put({ ...(doc as ComicDoc), ...updates }))
+    .catch(console.error);
+  const index = comicsCache.findIndex(c => c.id === id);
   if (index !== -1) {
-    data.comics[index] = { ...data.comics[index], ...updates };
-    saveStoredData(data);
+    comicsCache[index] = { ...comicsCache[index], ...updates };
   }
 };
 
 export const deleteComic = (id: string): void => {
-  const data = getStoredData();
-  data.comics = data.comics.filter(comic => comic.id !== id);
-  saveStoredData(data);
+  db.get(id)
+    .then(doc => db.remove(doc))
+    .catch(console.error);
+  comicsCache = comicsCache.filter(c => c.id !== id);
 };
 
-export const getComics = (): Comic[] => {
-  return getStoredData().comics;
-};
-
-export const getFavoriteComics = (): Comic[] => {
-  return getComics().filter(comic => comic.isFavorite);
-};
+export const getFavoriteComics = (): Comic[] => comicsCache.filter(c => c.isFavorite);
