@@ -1,80 +1,84 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { Comic, ComicStorage } from '../models/comic.model';
+import { BehaviorSubject } from 'rxjs';
+import PouchDB from 'pouchdb';
+import { Comic } from '../models/comic.model';
+import { COUCHDB_URL } from '../../db.config';
+
+interface ComicDoc extends Comic {
+  _id: string;
+  _rev?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ComicService {
-  private readonly STORAGE_KEY = 'comic-reader-data';
+  private db = new PouchDB<ComicDoc>('comics');
   private comicsSubject = new BehaviorSubject<Comic[]>([]);
   public comics$ = this.comicsSubject.asObservable();
 
   constructor() {
     this.loadComics();
+    this.setupSync();
   }
 
-  private getStoredData(): ComicStorage {
-    try {
-      const data = localStorage.getItem(this.STORAGE_KEY);
-      return data ? JSON.parse(data) : { comics: [], lastId: 0 };
-    } catch {
-      return { comics: [], lastId: 0 };
+  private setupSync() {
+    if (COUCHDB_URL) {
+      this.db.sync(COUCHDB_URL, { live: true, retry: true }).on('change', () => this.loadComics());
     }
+    this.db.changes({ since: 'now', live: true }).on('change', () => this.loadComics());
   }
 
-  private saveStoredData(data: ComicStorage): void {
+  private async loadComics(): Promise<void> {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-      this.comicsSubject.next(data.comics);
+      const result = await this.db.allDocs({ include_docs: true });
+      const comics = result.rows.map(row => {
+        const doc = row.doc as ComicDoc;
+        const { _id, _rev, ...rest } = doc;
+        return { id: _id, ...rest } as Comic;
+      }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      this.comicsSubject.next(comics);
     } catch (error) {
-      console.error('Failed to save data:', error);
+      console.error('Failed to load comics:', error);
+      this.comicsSubject.next([]);
     }
-  }
-
-  private loadComics(): void {
-    const data = this.getStoredData();
-    this.comicsSubject.next(data.comics);
   }
 
   addComic(comic: Omit<Comic, 'id'>): Comic {
-    const data = this.getStoredData();
-    const newComic: Comic = {
-      ...comic,
-      id: (data.lastId + 1).toString(),
-    };
-    
-    data.comics.unshift(newComic);
-    data.lastId += 1;
-    
-    this.saveStoredData(data);
+    const id = new Date().toISOString();
+    const newComic: Comic = { id, ...comic };
+    const doc: ComicDoc = { _id: id, ...comic };
+    this.db.put(doc).then(() => this.loadComics()).catch(console.error);
+    this.comicsSubject.next([newComic, ...this.comicsSubject.getValue()]);
     return newComic;
   }
 
   updateComic(id: string, updates: Partial<Comic>): void {
-    const data = this.getStoredData();
-    const index = data.comics.findIndex(comic => comic.id === id);
-    
+    this.db.get(id).then(doc => {
+      const updated = { ...(doc as ComicDoc), ...updates };
+      return this.db.put(updated);
+    }).then(() => this.loadComics()).catch(console.error);
+
+    const comics = this.comicsSubject.getValue();
+    const index = comics.findIndex(c => c.id === id);
     if (index !== -1) {
-      data.comics[index] = { ...data.comics[index], ...updates };
-      this.saveStoredData(data);
+      comics[index] = { ...comics[index], ...updates };
+      this.comicsSubject.next([...comics]);
     }
   }
 
   deleteComic(id: string): void {
-    const data = this.getStoredData();
-    data.comics = data.comics.filter(comic => comic.id !== id);
-    this.saveStoredData(data);
+    this.db.get(id).then(doc => this.db.remove(doc)).then(() => this.loadComics()).catch(console.error);
+    const comics = this.comicsSubject.getValue().filter(c => c.id !== id);
+    this.comicsSubject.next(comics);
   }
 
   getComicById(id: string): Comic | undefined {
-    const data = this.getStoredData();
-    return data.comics.find(comic => comic.id === id);
+    return this.comicsSubject.getValue().find(c => c.id === id);
   }
 
   getFavoriteComics(): Comic[] {
-    const data = this.getStoredData();
-    return data.comics.filter(comic => comic.isFavorite);
+    return this.comicsSubject.getValue().filter(c => c.isFavorite);
   }
 
   processComicImage(file: File): Promise<string[]> {
