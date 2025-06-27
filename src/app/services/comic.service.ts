@@ -33,7 +33,7 @@ export class ComicService {
     try {
       const result = await this.db.allDocs({ include_docs: true });
       const comics = result.rows
-        .map((row: PouchDB.Core.AllDocsRow<ComicDoc>) => {
+        .map((row: { doc?: ComicDoc }) => {
           const doc = row.doc as ComicDoc;
           const { _id, _rev, ...rest } = doc;
           return { id: _id, ...rest } as Comic;
@@ -78,7 +78,10 @@ export class ComicService {
   deleteComic(id: string): void {
     this.db
       .get(id)
-      .then((doc: ComicDoc) => this.db.remove(doc))
+      .then((doc: ComicDoc) => {
+        if (!doc._rev) throw new Error('Missing _rev for document removal');
+        return this.db.remove({ _id: doc._id, _rev: doc._rev });
+      })
       .then(() => this.loadComics())
       .catch(console.error);
     const comics = this.comicsSubject.getValue().filter(c => c.id !== id);
