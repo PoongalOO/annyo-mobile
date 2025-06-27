@@ -35,7 +35,7 @@ import { Subscription } from 'rxjs';
     IonAlert
   } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { add, book, heart, star, starOutline, calendar, trash } from 'ionicons/icons';
+import { add, book, heart, star, starOutline, calendar, trash, construct } from 'ionicons/icons';
 import { ComicService } from '../../services/comic.service';
 import { Comic } from '../../models/comic.model';
 
@@ -99,7 +99,7 @@ export class HomePage implements OnInit, OnDestroy {
     private comicService: ComicService,
     private router: Router
   ) {
-    addIcons({ add, book, heart, star, starOutline, calendar, trash });
+    addIcons({ add, book, heart, star, starOutline, calendar, trash, construct });
   }
 
   ngOnInit() {
@@ -214,6 +214,10 @@ export class HomePage implements OnInit, OnDestroy {
 
   goToFavorites() {
     this.router.navigate(['/favorites']);
+  }
+
+  goToGenerator() {
+    this.router.navigate(['/generator']);
   }
 
   private showToastMessage(message: string) {
