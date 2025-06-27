@@ -60,6 +60,7 @@ import { Comic } from '../../models/comic.model';
 export class ReaderPage implements OnInit {
   comic: Comic | undefined = undefined;
   currentPanel = 0;
+  isZoomed = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -126,6 +127,10 @@ export class ReaderPage implements OnInit {
 
   goToPanel(index: number) {
     this.currentPanel = index;
+  }
+
+  toggleZoom() {
+    this.isZoomed = !this.isZoomed;
   }
 
   toggleFavorite() {

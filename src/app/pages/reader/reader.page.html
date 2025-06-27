@@ -39,13 +39,15 @@
       <ion-icon name="chevron-back" slot="icon-only"></ion-icon>
     </ion-button>
 
-    <div class="panel-wrapper">
-      <ion-img 
-        [src]="comic.panels[currentPanel]" 
-        [alt]="'Panel ' + (currentPanel + 1)"
-        class="panel-image">
-      </ion-img>
-    </div>
+      <div class="panel-wrapper">
+        <ion-img
+          [src]="comic.panels[currentPanel]"
+          [alt]="'Panel ' + (currentPanel + 1)"
+          class="panel-image"
+          [class.zoomed]="isZoomed"
+          (click)="toggleZoom()">
+        </ion-img>
+      </div>
 
     <ion-button 
       fill="clear" 
