@@ -1,0 +1,128 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>
+      <ion-icon name="heart" slot="start" color="danger"></ion-icon>
+      Mes Favoris
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-badge color="secondary">{{ favorites.length }}</ion-badge>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Mes Favoris</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <!-- Sort options -->
+  <div class="sort-container" *ngIf="favorites.length > 0">
+    <ion-select 
+      [(ngModel)]="sortBy" 
+      (ionChange)="onSortChange()" 
+      placeholder="Trier par..."
+      interface="popover">
+      <ion-select-option value="title">Trier par titre</ion-select-option>
+      <ion-select-option value="rating">Trier par note</ion-select-option>
+      <ion-select-option value="date">Trier par date</ion-select-option>
+    </ion-select>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="favorites.length === 0" class="empty-state">
+    <ion-icon name="heart" size="large" color="medium"></ion-icon>
+    <h2>Aucune BD favorite</h2>
+    <p>Ajoutez des BD à vos favoris en cliquant sur le cœur</p>
+    <ion-button (click)="goBack()" color="primary">
+      Parcourir les BD
+    </ion-button>
+  </div>
+
+  <!-- Favorites grid -->
+  <ion-grid *ngIf="favorites.length > 0">
+    <ion-row>
+      <ion-col size="12" size-sm="6" size-md="4" size-lg="3" *ngFor="let comic of favorites">
+        <ion-card class="comic-card" (click)="readComic(comic)">
+          <div class="card-actions">
+            <ion-button 
+              fill="clear" 
+              size="small" 
+              color="danger"
+              (click)="confirmDelete(comic, $event)"
+              class="delete-btn">
+              <ion-icon name="trash" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+          
+          <ion-img [src]="comic.coverImage" [alt]="comic.title" class="comic-cover"></ion-img>
+          
+          <ion-card-header>
+            <ion-card-title>{{ comic.title }}</ion-card-title>
+          </ion-card-header>
+          
+          <ion-card-content>
+            <div class="comic-info">
+              <div class="date-info">
+                <ion-icon name="calendar" color="medium"></ion-icon>
+                <ion-text color="medium">{{ formatDate(comic.publishDate) }}</ion-text>
+              </div>
+              
+              <div class="rating-favorite">
+                <div class="star-rating">
+                  <ion-icon 
+                    *ngFor="let star of getRatingStars(comic.rating)" 
+                    [name]="star <= comic.rating ? 'star' : 'star-outline'"
+                    [color]="star <= comic.rating ? 'warning' : 'medium'"
+                    (click)="updateRating(comic, star, $event)">
+                  </ion-icon>
+                </div>
+                
+                <ion-button 
+                  fill="clear" 
+                  size="small"
+                  color="danger"
+                  (click)="toggleFavorite(comic, $event)">
+                  <ion-icon name="heart" class="filled"></ion-icon>
+                </ion-button>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <!-- Delete confirmation alert -->
+  <ion-alert
+    [isOpen]="showDeleteAlert"
+    header="Supprimer la BD"
+    [message]="'Êtes-vous sûr de vouloir supprimer \"' + (comicToDelete?.title || '') + '\" ?'"
+    [buttons]="[
+      {
+        text: 'Annuler',
+        role: 'cancel',
+        handler: () => cancelDelete()
+      },
+      {
+        text: 'Supprimer',
+        role: 'destructive',
+        handler: () => deleteComic()
+      }
+    ]">
+  </ion-alert>
+
+  <!-- Toast -->
+  <ion-toast
+    [isOpen]="showToast"
+    [message]="toastMessage"
+    duration="3000"
+    (didDismiss)="showToast = false">
+  </ion-toast>
+</ion-content>

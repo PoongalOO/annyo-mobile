@@ -1,0 +1,7 @@
+{
+  "name": "comic-reader-ionic",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
