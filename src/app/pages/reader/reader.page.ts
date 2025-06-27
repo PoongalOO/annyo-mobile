@@ -58,7 +58,7 @@ import { Comic } from '../../models/comic.model';
   ]
 })
 export class ReaderPage implements OnInit {
-  comic: Comic | null = null;
+  comic: Comic | undefined = undefined;
   currentPanel = 0;
 
   constructor(
